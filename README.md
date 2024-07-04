@@ -1,7 +1,7 @@
 # Bootstrap Simple Autocomplete
 
 A super simple and lightweight autocomplete component for Bootstrap 5, designed for easy integration and remote data fetching.
-Created to replace legacy [Twitter's Typeahead.js](https://github.com/twitter/typeahead.js) when you just need remote autocomplete.
+Created to replace legacy [Twitter's Typeahead.js](https://github.com/twitter/typeahead.js) when you just need a remote autocomplete.
 
 ## Features
 
@@ -9,6 +9,7 @@ Created to replace legacy [Twitter's Typeahead.js](https://github.com/twitter/ty
 - Supports remote data fetching via AJAX
 - Fully compatible with Bootstrap 5
 - Keyboard navigation (up/down arrows, enter, escape)
+- replicates nice Typeahead.js UX behaviour
 
 ## Installation
 
@@ -22,7 +23,7 @@ npm install bootstrap-simple-autocomplete
 
 Download the bootstrap-simple-autocomplete.js file and include it in your HTML.
 
-<script src="path_to/bootstrap-simple-autocomplete.js"></script>
+`<script src="path_to/bootstrap-simple-autocomplete.js"></script>`
 
 ## Usage
 

@@ -1,6 +1,9 @@
 /**
  * BootstrapSimpleAutocomplete Class
  * A simple and lightweight autocomplete component for Bootstrap 5.
+ * https://github.com/osalabs/bootstrap-simple-autocomplete
+ * (c) 2024-present Oleg Savchuk
+ * @license MIT
  * 
  * Usage:
  * Include this script in your HTML and add the attribute 'data-autocomplete="URL"' to your input elements.
@@ -85,7 +88,8 @@ class BootstrapSimpleAutocomplete {
     }
 
     onKeyDown(event) {
-        if (event.key === 'Tab' || event.key === 'Enter') {
+        const hasSuggestions = this.dropdown.querySelector('.dropdown-item');
+        if ((event.key === 'Tab' || event.key === 'Enter') && hasSuggestions) {
             event.preventDefault();
             const activeOption = this.dropdown.querySelector('.dropdown-item.active');
             if (activeOption) {

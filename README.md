@@ -3,6 +3,8 @@
 A super simple and lightweight autocomplete component for Bootstrap 5, designed for easy integration and remote data fetching.
 Created to replace legacy [Twitter's Typeahead.js](https://github.com/twitter/typeahead.js) when you just need a remote autocomplete.
 
+Demo - https://osalabs.github.io/bootstrap-simple-autocomplete/
+
 ## Features
 
 - Lightweight and easy to use

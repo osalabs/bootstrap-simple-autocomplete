@@ -244,15 +244,5 @@ function initializeAutocomplete() {
     inputs.forEach(input => new BootstrapSimpleAutocomplete(input));
 }
 
-// Check if running as a module or script
-if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-    document.addEventListener('DOMContentLoaded', () => {
-        initializeAutocomplete();
-    });
-}
-
 // Export the class and initialization function for module usage
-if (typeof exports !== 'undefined') {
-    exports.BootstrapSimpleAutocomplete = BootstrapSimpleAutocomplete;
-    exports.initializeAutocomplete = initializeAutocomplete;
-}
+export { BootstrapSimpleAutocomplete, initializeAutocomplete };

@@ -61,7 +61,7 @@ This component ensures a smooth and intuitive user experience for providing auto
 If you are using ES6 modules, import the class and initialization function:
 
 ```javascript
-import { BootstrapSimpleAutocomplete, initializeAutocomplete } from 'bootstrap-simple-autocomplete';
+import { BootstrapSimpleAutocomplete, initializeAutocomplete } from 'bootstrap-simple-autocomplete.mjs';
 
 // Initialize all inputs with data-autocomplete attribute
 initializeAutocomplete();

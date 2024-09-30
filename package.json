@@ -1,6 +1,6 @@
 {
   "name": "bootstrap-simple-autocomplete",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "description": "A super simple and lightweight autocomplete component for Bootstrap 5 with remote data fetching.",
   "main": "bootstrap-simple-autocomplete.js",
   "type": "module",

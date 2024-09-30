@@ -1,29 +1,35 @@
 /**
- * BootstrapSimpleAutocomplete Class
+ * BootstrapSimpleAutocomplete Class v1.1
  * A simple and lightweight autocomplete component for Bootstrap 5.
  * https://github.com/osalabs/bootstrap-simple-autocomplete
  * (c) 2024-present Oleg Savchuk
  * @license MIT
- * 
+ *
  * Usage:
  * Include this script in your HTML and add the attribute 'data-autocomplete="URL"' to your input elements.
- * 
+ *
  * Example:
  * <input type="text" data-autocomplete="https://localhost?q=" class="form-control">
  * <script src="bootstrap-simple-autocomplete.js"></script>
- * 
+ *
  * ES6 Module Usage:
  * import { BootstrapSimpleAutocomplete, initializeAutocomplete } from 'bootstrap-simple-autocomplete.mjs';
- * 
+ *
  * Initialize:
  * initializeAutocomplete(); // To auto-initialize all elements with data-autocomplete attribute
  * or
  * new BootstrapSimpleAutocomplete(document.querySelector('input[data-autocomplete]')); // To initialize specific element
  */
 class BootstrapSimpleAutocomplete {
-    constructor(input) {
+    constructor(input, options = {}) {
         this.input = input;
         this.url = input.getAttribute('data-autocomplete');
+
+        // Parse options
+        this.debounceDelay = options.debounceDelay || parseInt(input.getAttribute('data-debounce')) || 300;
+        this.minQueryLength = options.minQueryLength || parseInt(input.getAttribute('data-minlength')) || 1;
+        this.fetchFunction = options.fetchFunction || this.defaultFetchFunction.bind(this);
+        this.renderItem = options.renderItem || this.defaultRenderItem.bind(this);
 
         // Create wrapper and dropdown elements
         const wrapper = document.createElement('div');
@@ -38,10 +44,21 @@ class BootstrapSimpleAutocomplete {
         wrapper.appendChild(this.dropdown);
 
         // Create debounced version of fetchData
-        this.debouncedFetchData = this.debounce(this.fetchData.bind(this), 300);
+        this.debouncedFetchData = this.debounce(this.fetchData.bind(this), this.debounceDelay);
+
+        // Store bound event handlers for later removal
+        this.onInputHandler = this.onInput.bind(this);
+        this.onKeyDownHandler = this.onKeyDown.bind(this);
+        this.onClickOutsideHandler = this.onClickOutside.bind(this);
 
         this.addEventListeners();
         this.insertStyles();
+
+        // Accessibility enhancements
+        this.id = Math.random().toString(36).substr(2, 9);
+        input.setAttribute('aria-autocomplete', 'list');
+        input.setAttribute('aria-controls', `autocomplete-list-${this.id}`);
+        this.dropdown.id = `autocomplete-list-${this.id}`;
     }
 
     debounce(fn, delay) {
@@ -53,38 +70,41 @@ class BootstrapSimpleAutocomplete {
     }
 
     addEventListeners() {
-        this.input.addEventListener('input', this.onInput.bind(this));
-        this.input.addEventListener('keydown', this.onKeyDown.bind(this));
-        document.addEventListener('click', this.onClickOutside.bind(this), { passive: true });
+        this.input.addEventListener('input', this.onInputHandler);
+        this.input.addEventListener('keydown', this.onKeyDownHandler);
+        document.addEventListener('click', this.onClickOutsideHandler, { passive: true });
     }
 
     onInput(event) {
         const query = event.target.value;
-        if (query.length === 0) {
-          this.closeDropdown();
-          return;
+        if (query.length < this.minQueryLength) {
+            this.closeDropdown();
+            return;
         }
 
         // Prefill input immediately
         const firstOption = this.dropdown.querySelector('.dropdown-item');
         if (firstOption && firstOption.textContent.toLowerCase().startsWith(query.toLowerCase())) {
-          this.prefillInput(firstOption.textContent, query);
+            this.prefillInput(firstOption.textContent, query);
         } else {
-          this.clearPrefill();
+            this.clearPrefill();
         }
 
         this.debouncedFetchData(query);
     }
 
     fetchData(query) {
-        fetch(`${this.url}${encodeURIComponent(query)}`, {
+        this.fetchFunction(query)
+            .then(data => this.showDropdown(data, query))
+            .catch(err => this.showError(err));
+    }
+
+    defaultFetchFunction(query) {
+        return fetch(`${this.url}${encodeURIComponent(query)}`, {
             headers: {
                 'Accept': 'application/json'
             }
-        })
-            .then(response => response.json())
-            .then(data => this.showDropdown(data, query))
-            .catch(err => this.showError(err));
+        }).then(response => response.json());
     }
 
     onKeyDown(event) {
@@ -117,21 +137,27 @@ class BootstrapSimpleAutocomplete {
         }
     }
 
+    defaultRenderItem(option, query, index) {
+        const item = document.createElement('a');
+        item.className = 'dropdown-item';
+        item.setAttribute('role', 'option');
+        item.setAttribute('aria-selected', 'false');
+        item.textContent = option;
+        item.id = `autocomplete-item-${this.id}-${index}`;
+        item.addEventListener('click', () => this.selectOption(option));
+        return item;
+    }
+
     showDropdown(options, query) {
         this.dropdown.innerHTML = '';
         if (options.length > 0) {
             const fragment = document.createDocumentFragment();
             const firstOption = options[0];
-            if (firstOption.toLowerCase().startsWith(query.toLowerCase())) {
+            if (typeof firstOption === 'string' && firstOption.toLowerCase().startsWith(query.toLowerCase())) {
                 this.prefillInput(firstOption, query);
             }
-            options.forEach(option => {
-                const item = document.createElement('a');
-                item.className = 'dropdown-item';
-                item.setAttribute('role', 'option');
-                item.setAttribute('aria-selected', 'false');
-                item.textContent = option;
-                item.addEventListener('click', () => this.selectOption(option));
+            options.forEach((option, index) => {
+                const item = this.renderItem(option, query, index);
                 fragment.appendChild(item);
             });
             this.dropdown.appendChild(fragment);
@@ -155,7 +181,7 @@ class BootstrapSimpleAutocomplete {
             const inputRect = this.input.getBoundingClientRect();
             const inputStyles = window.getComputedStyle(this.input);
             newPrefillSpan.style.height = `${inputRect.height}px`;
-            newPrefillSpan.style.width = `${inputRect.width}px`;            
+            newPrefillSpan.style.width = `${inputRect.width}px`;
             newPrefillSpan.style.fontSize = inputStyles.fontSize;
             newPrefillSpan.style.fontFamily = inputStyles.fontFamily;
             newPrefillSpan.style.fontWeight = inputStyles.fontWeight;
@@ -170,21 +196,25 @@ class BootstrapSimpleAutocomplete {
     }
 
     clearPrefill() {
-      const prefillSpan = this.input.parentNode.querySelector('.autocomplete-suggestion');
-      if (prefillSpan) {
-        prefillSpan.remove();
-      }
+        const prefillSpan = this.input.parentNode.querySelector('.autocomplete-suggestion');
+        if (prefillSpan) {
+            prefillSpan.remove();
+        }
     }
 
     selectOption(option) {
         this.input.value = option;
         this.closeDropdown();
+
+        const event = new CustomEvent('autocomplete.select', { detail: { value: option } });
+        this.input.dispatchEvent(event);
     }
 
     closeDropdown() {
         this.dropdown.classList.remove('show');
         this.dropdown.innerHTML = '';
         this.clearPrefill();
+        this.input.removeAttribute('aria-activedescendant');
     }
 
     showError(err) {
@@ -192,7 +222,7 @@ class BootstrapSimpleAutocomplete {
         this.dropdown.innerHTML = '';
         const error = document.createElement('div');
         error.className = 'dropdown-item text-danger';
-        error.textContent = 'Error fetching results';
+        error.textContent = err.message === 'Failed to fetch' ? 'Network error' : 'Error fetching results';
         error.style.pointerEvents = 'none';
         this.dropdown.appendChild(error);
         this.dropdown.classList.add('show');
@@ -212,6 +242,7 @@ class BootstrapSimpleAutocomplete {
                 item.classList.add('active');
                 item.scrollIntoView({ block: 'nearest' });
                 item.setAttribute('aria-selected', 'true');
+                this.input.setAttribute('aria-activedescendant', item.id);
                 this.prefillInput(item.textContent, this.input.value);
             } else {
                 item.classList.remove('active');
@@ -221,7 +252,10 @@ class BootstrapSimpleAutocomplete {
     }
 
     insertStyles() {
+        if (document.getElementById('bootstrap-simple-autocomplete-styles')) return;
+
         const style = document.createElement('style');
+        style.id = 'bootstrap-simple-autocomplete-styles';
         style.innerHTML = `
             .autocomplete-suggestion {
                 position: absolute;
@@ -233,6 +267,17 @@ class BootstrapSimpleAutocomplete {
             }
         `;
         document.head.appendChild(style);
+    }
+
+    /**
+     * Destroy the autocomplete instance and clean up event listeners
+     */
+    destroy() {
+        this.input.removeEventListener('input', this.onInputHandler);
+        this.input.removeEventListener('keydown', this.onKeyDownHandler);
+        document.removeEventListener('click', this.onClickOutsideHandler, { passive: true });
+        this.clearPrefill();
+        this.closeDropdown();
     }
 }
 

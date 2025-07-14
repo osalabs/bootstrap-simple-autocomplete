@@ -61,6 +61,11 @@ class BootstrapSimpleAutocomplete {
         this.dropdown.id = `autocomplete-list-${this.id}`;
     }
 
+    dispatch(type, detail = {}) {
+        const evdata = { bubbles: true, composed: true, detail };
+        this.input.dispatchEvent(new CustomEvent(type, evdata));
+    }
+
     debounce(fn, delay) {
         let timeoutId;
         return function (...args) {
@@ -94,9 +99,13 @@ class BootstrapSimpleAutocomplete {
     }
 
     fetchData(query) {
+        this.dispatch('autocomplete-fetch', { query });
         this.fetchFunction(query)
-            .then(data => this.showDropdown(data, query))
-            .catch(err => this.showError(err));
+            .then(data => {
+                this.dispatch('autocomplete-response', { query, results: data });
+                this.showDropdown(data, query);
+            })
+            .catch(err => this.showError(err, query));
     }
 
     defaultFetchFunction(query) {
@@ -121,7 +130,7 @@ class BootstrapSimpleAutocomplete {
                 }
             }
         } else if (event.key === 'Escape') {
-            this.closeDropdown();
+            this.closeDropdown('escape');
         } else if (event.key === 'ArrowDown') {
             event.preventDefault(); // Prevent cursor movement
             this.navigateDropdown('down');
@@ -133,7 +142,7 @@ class BootstrapSimpleAutocomplete {
 
     onClickOutside(event) {
         if (!this.dropdown.contains(event.target) && event.target !== this.input) {
-            this.closeDropdown();
+            this.closeDropdown('blur');
         }
     }
 
@@ -162,7 +171,9 @@ class BootstrapSimpleAutocomplete {
             });
             this.dropdown.appendChild(fragment);
             this.dropdown.classList.add('show');
+            this.dispatch('autocomplete-open', { query, results: options });
         } else {
+            this.dispatch('autocomplete-no-results', { query });
             this.closeDropdown();
         }
     }
@@ -204,21 +215,25 @@ class BootstrapSimpleAutocomplete {
 
     selectOption(option) {
         this.input.value = option;
-        this.closeDropdown();
+        this.closeDropdown('select');
 
-        const evdata = { bubbles: true, composed: true, detail: { value: option } } };
-        this.input.dispatchEvent(new CustomEvent('autocomplete', evdata));
-        this.input.dispatchEvent(new CustomEvent('autocomplete.select', evdata)); //to be deprecated
+        const evdata = { value: option };
+        this.dispatch('autocomplete', evdata);
+        this.dispatch('autocomplete.select', evdata); //to be deprecated
     }
 
-    closeDropdown() {
+    closeDropdown(reason) {
+        const wasOpen = this.dropdown.classList.contains('show');
         this.dropdown.classList.remove('show');
         this.dropdown.innerHTML = '';
         this.clearPrefill();
         this.input.removeAttribute('aria-activedescendant');
+        if (wasOpen && reason) {
+            this.dispatch('autocomplete-close', { reason });
+        }
     }
 
-    showError(err) {
+    showError(err, query) {
         console.error(err);
         this.dropdown.innerHTML = '';
         const error = document.createElement('div');
@@ -227,6 +242,7 @@ class BootstrapSimpleAutocomplete {
         error.style.pointerEvents = 'none';
         this.dropdown.appendChild(error);
         this.dropdown.classList.add('show');
+        this.dispatch('autocomplete-error', { query, error: err });
     }
 
     navigateDropdown(direction) {
@@ -245,6 +261,7 @@ class BootstrapSimpleAutocomplete {
                 item.setAttribute('aria-selected', 'true');
                 this.input.setAttribute('aria-activedescendant', item.id);
                 this.prefillInput(item.textContent, this.input.value);
+                this.dispatch('autocomplete-highlight', { value: item.textContent, index });
             } else {
                 item.classList.remove('active');
                 item.setAttribute('aria-selected', 'false');
@@ -278,7 +295,7 @@ class BootstrapSimpleAutocomplete {
         this.input.removeEventListener('keydown', this.onKeyDownHandler);
         document.removeEventListener('click', this.onClickOutsideHandler, { passive: true });
         this.clearPrefill();
-        this.closeDropdown();
+        this.closeDropdown('blur');
     }
 }
 

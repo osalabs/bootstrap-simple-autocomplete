@@ -117,13 +117,13 @@ The component dispatches several custom events during its lifecycle:
 
 | When it fires | `type` you dispatch | `detail` payload suggestion | jQuery handler example |
 | ------------- | ------------------- | --------------------------- | ---------------------- |
+| Final value chosen | **`autocomplete`** | `{ value }` | `$('#el').on('autocomplete', (e) => …)` |
 | Query text sent to `fetchFunction` | **`autocomplete-fetch`** | `{ query:string }` | `$('#el').on('autocomplete-fetch', (e) => …)` |
 | Results returned (success) | **`autocomplete-response`** | `{ query, results:Array }` | |
 | No results returned | **`autocomplete-no-results`** | `{ query }` | |
 | Dropdown becomes visible | **`autocomplete-open`** | `{ query, results }` | |
 | Dropdown hidden/cleared | **`autocomplete-close`** | `{ reason:"blur" \| "escape" \| "select" }` | |
 | An item is highlighted via arrow keys | **`autocomplete-highlight`** | `{ value, index }` | |
-| Final value chosen (already have) | **`autocomplete`** | `{ value }` | |
 | Network or parsing error | **`autocomplete-error`** | `{ query, error:Error }` | |
 
 Example listening for the final selection:

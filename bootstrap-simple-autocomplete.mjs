@@ -219,7 +219,6 @@ class BootstrapSimpleAutocomplete {
 
         const evdata = { value: option };
         this.dispatch('autocomplete', evdata);
-        this.dispatch('autocomplete.select', evdata); //to be deprecated
     }
 
     closeDropdown(reason) {

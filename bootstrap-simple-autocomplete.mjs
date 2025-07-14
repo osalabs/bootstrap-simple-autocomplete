@@ -206,8 +206,9 @@ class BootstrapSimpleAutocomplete {
         this.input.value = option;
         this.closeDropdown();
 
-        const event = new CustomEvent('autocomplete.select', { detail: { value: option } });
-        this.input.dispatchEvent(event);
+        const evdata = { bubbles: true, composed: true, detail: { value: option } } };
+        this.input.dispatchEvent(new CustomEvent('autocomplete', evdata));
+        this.input.dispatchEvent(new CustomEvent('autocomplete.select', evdata)); //to be deprecated
     }
 
     closeDropdown() {

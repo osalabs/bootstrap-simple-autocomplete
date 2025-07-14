@@ -113,10 +113,10 @@ const autocomplete = new BootstrapSimpleAutocomplete(inputElement, {
 
 ### Event Handling
 
-Listen for the `autocomplete.select` event to perform actions when a user selects an option.
+Listen for the `autocomplete` event to perform actions when a user selects an option.
 
 ```javascript
-inputElement.addEventListener('autocomplete.select', (event) => {
+inputElement.addEventListener('autocomplete', (event) => {
   console.log('Selected value:', event.detail.value);
   // Update your model or perform other actions
 });
